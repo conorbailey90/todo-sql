@@ -1,12 +1,12 @@
 // Define Task interface for consistency across the app
 interface Task {
   id: number;
-  taskText: string;
-  isComplete: boolean;
+  task_text: string;
+  task_completed: boolean;
+  date_added: Date
 }
 
 interface TaskListProps {
-  selectedChain?: string; // The name of the currently selected blockchain network
   addNewTask: (e: React.FormEvent) => Promise<void>; // Function to add a new task
   completeTask: (taskId: number) => Promise<void>; // Function to mark a task as complete
   isLoading: boolean; // Indicates if a transaction is in progress
@@ -16,7 +16,7 @@ interface TaskListProps {
   currentAccount: string; // The connected user's wallet address
 }
 
-function TaskList({selectedChain, addNewTask, completeTask, isLoading, tasks, input, setInput, currentAccount}: TaskListProps) {
+function TaskList({ addNewTask, completeTask, isLoading, tasks, input, setInput, currentAccount}: TaskListProps) {
  
   return (
     <div className="w-full max-w-lg bg-gray-800 p-6 rounded-xl shadow-xl">
@@ -24,9 +24,7 @@ function TaskList({selectedChain, addNewTask, completeTask, isLoading, tasks, in
       <p className="text-sm text-gray-400 mb-2">
         Connected: <span className="font-mono">{currentAccount.slice(0, 6)}...{currentAccount.slice(-4)}</span>
       </p>
-      <p className="text-sm text-gray-400 mb-6">
-        Network: {selectedChain}
-      </p>
+     
 
       <form onSubmit={addNewTask} className="mb-6">
         <input
@@ -56,11 +54,11 @@ function TaskList({selectedChain, addNewTask, completeTask, isLoading, tasks, in
               className="flex justify-between items-center p-4 bg-gray-700 rounded-lg shadow-sm hover:bg-gray-600 transition duration-200"
             >
               <span
-                className={`font-medium ${task.isComplete ? 'line-through text-gray-500' : 'text-white'}`}
+                className={`font-medium ${task.task_completed ? 'line-through text-gray-500' : 'text-white'}`}
               >
-                {task.taskText}
+                {task.task_text}
               </span>
-              {!task.isComplete && (
+              {!task.task_completed && (
                 <button
                   onClick={() => completeTask(task.id)}
                   className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed"

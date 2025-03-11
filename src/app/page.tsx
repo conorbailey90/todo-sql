@@ -3,98 +3,146 @@
 import { useState, useEffect, useCallback } from 'react';
 import Login from '@/components/Login';
 import TaskList from '@/components/TaskList';
+import { registerUser, fetchTasks, addTask, completeTask } from './actions';
 
 // Define Task interface for consistency across the app
 interface Task {
   id: number;
-  taskText: string;
-  isComplete: boolean;
+  task_text: string;
+  task_completed: boolean;
+  date_added: Date;
 }
 
 export default function Home() {
-    // ===== STATE MANAGEMENT =====
-    // Check if MetaMask is installed on initial load
-    const [walletInstalled, setWalletInstalled] = useState(false);
+  // ===== STATE MANAGEMENT =====
+  // Check if MetaMask is installed on initial load
+  const [walletInstalled, setWalletInstalled] = useState(false);
+  // Store the connected wallet address
+  const [currentAccount, setCurrentAccount] = useState<string>('');
+  // Store tasks retrieved from the blockchain
+  const [tasks, setTasks] = useState<Task[]>([]);
+  // Store the new task input value
+  const [input, setInput] = useState<string>('');
+  // Track loading state during transactions
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    // Store the connected wallet address
-    const [currentAccount, setCurrentAccount] = useState<string>('');
-    // Store tasks retrieved from the blockchain
-    const [tasks, setTasks] = useState<Task[]>([]);
-    // Store the new task input value
-    const [input, setInput] = useState<string>('');
-    // Track loading state during transactions
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-
-
-    const connectWallet = async () => {
-        try {
-            if (!window.ethereum) {
-                setWalletInstalled(false);
-                return;
-            }
-        
-            // Request access to the user's MetaMask accounts
-            const accounts = await window.ethereum.request({ 
-                method: 'eth_requestAccounts' 
-            });
-    
-            // Set the first account as the current account
-            if (accounts.length > 0) {
-                setCurrentAccount(accounts[0]);
-            }
-
-            console.log(accounts[0])
-        } catch (err) {
-            console.error('Failed to connect wallet:', err);
-        }
-    }
-
-
-    const addNewTask = useCallback(async (e: React.FormEvent) => {
-        e.preventDefault();
-    }, [])
+  const connectWallet = async () => {
+    try {
+      setIsLoading(true);
+      
+      if (!window.ethereum) {
+        setWalletInstalled(false);
+        return;
+      }
   
+      // Request access to the user's MetaMask accounts
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+    
+      // Set the first account as the current account
+      if (accounts.length > 0) {
+        await registerUser(accounts[0]);
+        setCurrentAccount(accounts[0]);
+      }
+    } catch (err) {
+      console.error('Failed to connect wallet:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const handleFetchTasks = useCallback(async () => {
+    if (!currentAccount) return;
+    
+    try {
+      setIsLoading(true);
+      const fetchedTasks = await fetchTasks(currentAccount);
+      setTasks(fetchedTasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentAccount]);
 
-    const completeTask = useCallback(async (taskId: number) => {
+  const handleAddTask = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!input.trim()) return;
+    
+    try {
+      setIsLoading(true);
+      await addTask(currentAccount, input);
+      setInput(''); // Clear input after adding
+      await handleFetchTasks();
+    } catch (error) {
+      console.error('Error adding task:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [input, currentAccount, handleFetchTasks]);
+  
+  const handleCompleteTask = useCallback(async (taskId: number) => {
+    try {
+      console.log(`CURRENT: ${currentAccount}`)
+      setIsLoading(true);
+      await completeTask(currentAccount, taskId);
+      await handleFetchTasks();
+    } catch (error) {
+      console.error('Error completing task:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentAccount, handleFetchTasks]);
 
-    }, []) 
-
-  // Initial useEffect to check if wallet is installed and get selectedCahin from LS
+  // Initialize and set up event listeners
   useEffect(() => {
-    setWalletInstalled(!!window.ethereum);
+    const checkWalletInstallation = () => {
+      setWalletInstalled(!!window.ethereum);
+    };
 
-    const handleAccountsChanged = (accounts: string[]) => {
+    const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
         // User disconnected all accounts
         setCurrentAccount('');
       } else {
         // User switched to a different account or connected for the first time
-        setCurrentAccount(accounts[0]);
-        
+        try {
+          await registerUser(accounts[0]);
+          setCurrentAccount(accounts[0]);
+        } catch (error) {
+          console.error('Error registering user after account change:', error);
+        }
       }
+    };
+
+    // Initial checks
+    checkWalletInstallation();
+
+    // Add event listeners for MetaMask if available
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
-
-    // Add event listeners for MetaMask
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-
-    // Silently check for connected accounts without prompting
-    if (window.ethereum.selectedAddress) {
-      // If MetaMask already has a selected address in this tab
-      setCurrentAccount(window.ethereum.selectedAddress);
-    }
-
+    
     // Clean up event listeners when component unmounts
     return () => {
-      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      }
     };
-  },[]);
+  }, []);
+
+  // Fetch tasks when account changes
+  useEffect(() => {
+    if (currentAccount) {
+      handleFetchTasks();
+    }
+  }, [currentAccount, handleFetchTasks]);
 
   // ===== COMPONENT RENDERING =====
   return (
     <main className="min-h-screen bg-[#161616] text-white flex items-center justify-center p-6">
-      
-      {/* Show login component if not connected, otherwise show task list */}
       {!walletInstalled || !currentAccount ? (
         <Login 
           connectWallet={connectWallet} 
@@ -103,8 +151,8 @@ export default function Home() {
         />
       ) : (
         <TaskList 
-          addNewTask={addNewTask}
-          completeTask={completeTask}
+          addNewTask={handleAddTask}
+          completeTask={handleCompleteTask}
           isLoading={isLoading}
           tasks={tasks}
           input={input}
