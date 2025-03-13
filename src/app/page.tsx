@@ -17,17 +17,18 @@ interface Task {
 declare global {
   interface Window {
     ethereum?: {
-      request: (args: { method: string }) => Promise<string[]>;
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
       on: (event: string, callback: (accounts: string[]) => void) => void;
       removeListener: (event: string, callback: (accounts: string[]) => void) => void;
+      isMetaMask?: boolean;
     };
   }
 }
 
 export default function Home() {
   // ===== STATE MANAGEMENT =====
-  // Check if MetaMask is installed on initial load
-  const [walletInstalled, setWalletInstalled] = useState(false);
+  // Check if wallet is available (MetaMask or mobile wallet)
+  const [walletAvailable, setWalletAvailable] = useState(false);
   // Store the connected wallet address
   const [currentAccount, setCurrentAccount] = useState<string>('');
   // Store tasks retrieved from the blockchain
@@ -36,26 +37,75 @@ export default function Home() {
   const [input, setInput] = useState<string>('');
   // Track loading state during transactions
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Track what device type is being used
+  const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
+
+  // Detect if user is on a mobile device
+  useEffect(() => {
+    const checkMobileDevice = () => {
+      const userAgent = navigator.userAgent || navigator.vendor;
+      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    };
+    
+    setIsMobileDevice(checkMobileDevice());
+  }, []);
+
+  // Check if wallet is available without triggering connection
+  useEffect(() => {
+    const checkWalletAvailability = () => {
+      // Check if MetaMask or other injected wallet is available
+      const hasInjectedWallet = typeof window !== 'undefined' && !!window.ethereum;
+      setWalletAvailable(hasInjectedWallet);
+    };
+
+    checkWalletAvailability();
+  }, []);
 
   const connectWallet = async () => {
     try {
       setIsLoading(true);
       
-      // Use the properly typed window.ethereum
-      if (!window.ethereum) {
-        setWalletInstalled(false);
-        return;
-      }
-  
-      // Request access to the user's MetaMask accounts
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts' 
-      });
-    
-      // Set the first account as the current account
-      if (accounts.length > 0) {
-        await registerUser(accounts[0]);
-        setCurrentAccount(accounts[0]);
+      // Handle mobile device specific wallet connection
+      if (isMobileDevice) {
+        // For mobile devices using in-app browsers like MetaMask Mobile or Trust Wallet
+        if (window.ethereum) {
+          const accounts = await window.ethereum.request({ 
+            method: 'eth_requestAccounts' 
+          });
+          
+          if (accounts.length > 0) {
+            await registerUser(accounts[0]);
+            setCurrentAccount(accounts[0]);
+          }
+        } 
+        // For mobile devices without an injected wallet, provide deeplink options
+        else {
+          // Option 1: Open in MetaMask mobile app
+          const dappUrl = window.location.href;
+          const metamaskAppDeepLink = `https://metamask.app.link/dapp/${dappUrl.replace(/^https?:\/\//, '')}`;
+          
+          if (confirm("No wallet detected. Open in MetaMask app?")) {
+            window.location.href = metamaskAppDeepLink;
+            return;
+          }
+        }
+      } 
+      // Desktop flow
+      else {
+        if (!window.ethereum) {
+          alert("Please install MetaMask or another Ethereum wallet to use this application.");
+          setWalletAvailable(false);
+          return;
+        }
+        
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts' 
+        });
+        
+        if (accounts.length > 0) {
+          await registerUser(accounts[0]);
+          setCurrentAccount(accounts[0]);
+        }
       }
     } catch (err) {
       console.error('Failed to connect wallet:', err);
@@ -111,18 +161,14 @@ export default function Home() {
     }
   }, [currentAccount, handleFetchTasks]);
 
-  // Initialize and set up event listeners
+  // Initialize and set up event listeners without automatically connecting
   useEffect(() => {
-    const checkWalletInstallation = () => {
-      setWalletInstalled(!!window.ethereum);
-    };
-
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
         // User disconnected all accounts
         setCurrentAccount('');
       } else {
-        // User switched to a different account or connected for the first time
+        // User switched to a different account
         try {
           await registerUser(accounts[0]);
           setCurrentAccount(accounts[0]);
@@ -132,10 +178,7 @@ export default function Home() {
       }
     };
 
-    // Initial checks
-    checkWalletInstallation();
-
-    // Add event listeners for MetaMask if available
+    // Add event listeners for wallet if available
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
@@ -158,11 +201,12 @@ export default function Home() {
   // ===== COMPONENT RENDERING =====
   return (
     <main className="min-h-screen bg-[#74716E] text-white flex items-center justify-center p-6">
-      {!walletInstalled || !currentAccount ? (
+      {!currentAccount ? (
         <Login 
           connectWallet={connectWallet} 
           isLoading={isLoading} 
-          walletInstalled={walletInstalled}
+          walletInstalled={walletAvailable}
+          isMobileDevice={isMobileDevice}
         />
       ) : (
         <TaskList 
