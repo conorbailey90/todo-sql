@@ -11,9 +11,18 @@ interface Task {
   task_text: string;
   task_completed: boolean;
   date_added: Date
-  
 }
 
+// Create a proper type for the ethereum property on window
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string }) => Promise<string[]>;
+      on: (event: string, callback: (accounts: string[]) => void) => void;
+      removeListener: (event: string, callback: (accounts: string[]) => void) => void;
+    };
+  }
+}
 
 export default function Home() {
   // ===== STATE MANAGEMENT =====
@@ -32,14 +41,14 @@ export default function Home() {
     try {
       setIsLoading(true);
       
-      // Then in your code, use type assertion when accessing window.ethereum
-      if (!(window as any).ethereum) {
+      // Use the properly typed window.ethereum
+      if (!window.ethereum) {
         setWalletInstalled(false);
         return;
       }
   
       // Request access to the user's MetaMask accounts
-      const accounts = await (window as any).ethereum.request({ 
+      const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
     
@@ -105,7 +114,7 @@ export default function Home() {
   // Initialize and set up event listeners
   useEffect(() => {
     const checkWalletInstallation = () => {
-      setWalletInstalled(!!(window as any).ethereum);
+      setWalletInstalled(!!window.ethereum);
     };
 
     const handleAccountsChanged = async (accounts: string[]) => {
@@ -127,14 +136,14 @@ export default function Home() {
     checkWalletInstallation();
 
     // Add event listeners for MetaMask if available
-    if ((window as any).ethereum) {
-      (window as any).ethereum.on('accountsChanged', handleAccountsChanged);
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
     
     // Clean up event listeners when component unmounts
     return () => {
-      if ((window as any).ethereum) {
-        (window as any).ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       }
     };
   }, []);
