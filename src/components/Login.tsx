@@ -46,7 +46,7 @@ const Login: FC<LoginProps> = ({ connectWallet, isLoading, walletInstalled, isMo
             <div className="mt-4 text-sm text-gray-300">
               <p>Using a mobile device? You can:</p>
               <ul className="list-disc pl-6 mt-2 text-left">
-                <li>Open this page in MetaMask's browser</li>
+                <li>Open this page in MetaMasks browser</li>
                 <li>Use WalletConnect-compatible wallets</li>
                 <li>Use Trust Wallet or Coinbase Wallet</li>
               </ul>
