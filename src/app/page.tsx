@@ -15,13 +15,6 @@ interface Task {
 }
 
 
-// At the top of your file, add this interface
-interface EthereumProvider {
-  request: (args: any) => Promise<any>;
-  on: (event: string, callback: any) => void;
-  removeListener: (event: string, callback: any) => void;
-}
-
 export default function Home() {
   // ===== STATE MANAGEMENT =====
   // Check if MetaMask is installed on initial load
