@@ -9,18 +9,18 @@ function Login({ connectWallet, isLoading , walletInstalled}: LoginProps) {
 
 
   return (
-    <div className="text-center bg-[#000000] p-8 rounded-lg">
-      <h1 className="text-2xl font-bold mb-4 tracking-tight">Decentralized Todo App</h1>
+    <div className="text-center bg-[#161616] p-8 ">
+      <h1 className="text-xl font-bold mb-4 tracking-tight">Decentralized Todo App</h1>
       
       {walletInstalled ? (
         <div>
-             <p className="text-gray-400 mb-4">Connect your wallet to get started</p>
+             <p className="text-[#ffffffcf] mb-4">Connect your wallet to get started</p>
             <button
                 onClick={connectWallet}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cursor-pointer bg-[#74716eb8] text-white px-6 py-3 transition duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
             >
-                CONNECT WALLET
+                Connect Wallet
             </button>
         </div>
         )

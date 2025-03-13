@@ -10,12 +10,12 @@ interface User {
 }
 
 interface Task {
-  id: number;
-  user_wallet_address: string;
-  task_text: string;
-  task_completed: boolean;
-  date_added?: Date;
-}
+    id: number;
+    task_text: string;
+    task_completed: boolean;
+    date_added: Date    
+  }
+  
 
 // Type for SQL query results
 type QueryResult<T> = T[];
@@ -88,9 +88,10 @@ export async function completeTask(walletAddress: string, taskId: number): Promi
   const sql = getDb();
   
   await sql`
-    UPDATE tasks
-    SET task_completed = TRUE
-    WHERE id = ${taskId}
+   UPDATE tasks
+    SET task_completed = TRUE, 
+    date_completed = NOW()
+    WHERE id = ${taskId} 
     AND user_wallet_address = ${walletAddress}
     RETURNING *;
   `;

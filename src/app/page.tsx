@@ -10,7 +10,16 @@ interface Task {
   id: number;
   task_text: string;
   task_completed: boolean;
-  date_added: Date;
+  date_added: Date
+  
+}
+
+
+// At the top of your file, add this interface
+interface EthereumProvider {
+  request: (args: any) => Promise<any>;
+  on: (event: string, callback: any) => void;
+  removeListener: (event: string, callback: any) => void;
 }
 
 export default function Home() {
@@ -30,13 +39,14 @@ export default function Home() {
     try {
       setIsLoading(true);
       
-      if (!window.ethereum) {
+      // Then in your code, use type assertion when accessing window.ethereum
+      if (!(window as any).ethereum) {
         setWalletInstalled(false);
         return;
       }
   
       // Request access to the user's MetaMask accounts
-      const accounts = await window.ethereum.request({ 
+      const accounts = await (window as any).ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
     
@@ -57,7 +67,7 @@ export default function Home() {
     
     try {
       setIsLoading(true);
-      const fetchedTasks = await fetchTasks(currentAccount);
+      const fetchedTasks: Task[] = await fetchTasks(currentAccount);
       setTasks(fetchedTasks);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -69,7 +79,10 @@ export default function Home() {
   const handleAddTask = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!input.trim()) return;
+    if (!input.trim()) {
+      alert('Please enter a task!')
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -99,7 +112,7 @@ export default function Home() {
   // Initialize and set up event listeners
   useEffect(() => {
     const checkWalletInstallation = () => {
-      setWalletInstalled(!!window.ethereum);
+      setWalletInstalled(!!(window as any).ethereum);
     };
 
     const handleAccountsChanged = async (accounts: string[]) => {
@@ -121,14 +134,14 @@ export default function Home() {
     checkWalletInstallation();
 
     // Add event listeners for MetaMask if available
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
+    if ((window as any).ethereum) {
+      (window as any).ethereum.on('accountsChanged', handleAccountsChanged);
     }
     
     // Clean up event listeners when component unmounts
     return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      if ((window as any).ethereum) {
+        (window as any).ethereum.removeListener('accountsChanged', handleAccountsChanged);
       }
     };
   }, []);
@@ -142,7 +155,7 @@ export default function Home() {
 
   // ===== COMPONENT RENDERING =====
   return (
-    <main className="min-h-screen bg-[#161616] text-white flex items-center justify-center p-6">
+    <main className="min-h-screen bg-[#74716E] text-white flex items-center justify-center p-6">
       {!walletInstalled || !currentAccount ? (
         <Login 
           connectWallet={connectWallet} 

@@ -4,6 +4,7 @@ interface Task {
   task_text: string;
   task_completed: boolean;
   date_added: Date
+  
 }
 
 interface TaskListProps {
@@ -19,10 +20,10 @@ interface TaskListProps {
 function TaskList({ addNewTask, completeTask, isLoading, tasks, input, setInput, currentAccount}: TaskListProps) {
  
   return (
-    <div className="w-full max-w-lg bg-gray-800 p-6 rounded-xl shadow-xl">
-      <h1 className="text-2xl font-bold mb-4 tracking-tight">Your Todo List</h1>
-      <p className="text-sm text-gray-400 mb-2">
-        Connected: <span className="font-mono">{currentAccount.slice(0, 6)}...{currentAccount.slice(-4)}</span>
+    <div className="w-full max-w-lg bg-[#161616] p-6">
+      <h1 className="text-xl font-bold mb-4 tracking-tight">Your Todo List</h1>
+      <p className="text-sm text-white mb-2">
+        Connected: {currentAccount.slice(0, 6)}...{currentAccount.slice(-4)}
       </p>
      
 
@@ -32,26 +33,27 @@ function TaskList({ addNewTask, completeTask, isLoading, tasks, input, setInput,
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Add a new task"
-          className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50"
+          className="w-full p-3 bg-[#ffffff27] text-white placeholder-white focus:outline-none disabled:opacity-50"
           disabled={isLoading}
         />
         <button
           type="submit"
-          className="mt-3 w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed shadow-md"
+          className="cursor-pointer mt-3 w-full bg-[#74716E] text-white p-3 hover:bg-black transition duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed shadow-md"
           disabled={isLoading}
         >
-          {isLoading ? 'UPDATING...' : 'ADD TASK'}
+          {isLoading ? 'Updating...' : 'Add Task'}
         </button>
       </form>
 
       {tasks.length === 0 ? (
-        <p className="text-gray-400 text-center">No tasks yet. Add one above!</p>
+        <p className="text-white text-center">No tasks yet. Add one above!</p>
       ) : (
         <ul className="space-y-3">
-          {tasks.map((task) => (
+          {tasks.map((task) => !task.task_completed && (
+            
             <li
               key={task.id}
-              className="flex justify-between items-center p-4 bg-gray-700 rounded-lg shadow-sm hover:bg-gray-600 transition duration-200"
+              className="flex justify-between items-center p-4 bg-[#ffffff27] transition duration-200"
             >
               <span
                 className={`font-medium ${task.task_completed ? 'line-through text-gray-500' : 'text-white'}`}
@@ -61,10 +63,10 @@ function TaskList({ addNewTask, completeTask, isLoading, tasks, input, setInput,
               {!task.task_completed && (
                 <button
                   onClick={() => completeTask(task.id)}
-                  className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  className="cursor-pointer bg-[#74716E] text-white px-3 py-1 hover:bg-black transition duration-200 disabled:cursor-not-allowed"
                   disabled={isLoading}
                 >
-                  {isLoading ? '...' : 'DONE'}
+                  {isLoading ? '...' : 'Done'}
                 </button>
               )}
             </li>
