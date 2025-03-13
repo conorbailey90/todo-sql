@@ -1,4 +1,5 @@
-// Define Task interface for consistency across the app
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 interface Task {
   id: number;
   task_text: string;

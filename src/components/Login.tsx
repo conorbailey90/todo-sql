@@ -1,4 +1,5 @@
-// components/Login.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { FC } from 'react';
 
 interface LoginProps {
