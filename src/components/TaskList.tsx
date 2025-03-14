@@ -21,10 +21,10 @@ interface TaskListProps {
 function TaskList({ addNewTask, completeTask, isLoading, tasks, input, setInput, currentAccount}: TaskListProps) {
  
   return (
-    <div className="w-full max-w-lg bg-[#161616] p-6">
-      <h1 className="text-xl font-bold mb-4 tracking-tight">Your Todo List</h1>
-      <p className="text-sm text-white mb-2">
-        Connected: {currentAccount.slice(0, 6)}...{currentAccount.slice(-4)}
+    <div className="w-[95%] bg-[#161616] p-6">
+      <h1 className=" mb-4 tracking-tight">Your Todo List</h1>
+      <p className="text-white mb-2">
+        Connected: {currentAccount}
       </p>
      
 

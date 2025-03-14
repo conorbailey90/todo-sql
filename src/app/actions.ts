@@ -31,28 +31,18 @@ function getDb() {
   return neon(databaseUrl);
 }
 
-/**
- * Validate wallet address format
- */
-function validateWalletAddress(walletAddress: string): void {
-  if (!walletAddress || !walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-    throw new Error("Invalid MetaMask wallet address");
-  }
-}
-
-export async function registerUser(walletAddress: string): Promise<User[]> {
-  validateWalletAddress(walletAddress);
+export async function registerUser(email: string): Promise<User[]> {
   const sql = getDb();
   
   const data = await sql`
     SELECT * FROM users
-    WHERE wallet_address = ${walletAddress};
+    WHERE wallet_address = ${email};
   ` as QueryResult<User>;
 
   if (data.length === 0) {
     const newUser = await sql`
       INSERT INTO users (wallet_address)
-      VALUES (${walletAddress})
+      VALUES (${email})
       RETURNING *;
     ` as QueryResult<User>;
     return newUser;
@@ -61,30 +51,29 @@ export async function registerUser(walletAddress: string): Promise<User[]> {
   return data;
 }
 
-export async function fetchTasks(walletAddress: string): Promise<Task[]> {
-  validateWalletAddress(walletAddress);
+export async function fetchTasks(email: string): Promise<Task[]> {
+
   const sql = getDb();
   
   const data = await sql`
     SELECT * FROM tasks 
-    WHERE user_wallet_address = ${walletAddress};
+    WHERE user_wallet_address = ${email};
   ` as QueryResult<Task>;
   
   return data;
 }
 
-export async function addTask(walletAddress: string, task: string): Promise<void> {
-  validateWalletAddress(walletAddress);
+export async function addTask(email: string, task: string): Promise<void> {
+
   const sql = getDb();
   
   await sql`
     INSERT INTO tasks (user_wallet_address, task_text)
-    VALUES (${walletAddress}, ${task})
+    VALUES (${email}, ${task})
   `;
 }
 
-export async function completeTask(walletAddress: string, taskId: number): Promise<void> {
-  validateWalletAddress(walletAddress);
+export async function completeTask(email: string, taskId: number): Promise<void> {
   const sql = getDb();
   
   await sql`
@@ -92,7 +81,7 @@ export async function completeTask(walletAddress: string, taskId: number): Promi
     SET task_completed = TRUE, 
     date_completed = NOW()
     WHERE id = ${taskId} 
-    AND user_wallet_address = ${walletAddress}
+    AND user_wallet_address = ${email}
     RETURNING *;
   `;
 }

@@ -1,10 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+import { SessionProvider } from "next-auth/react";
+
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "TASK LIST",
-  description: "",
-};
 
 export default function RootLayout({
   children,
@@ -13,11 +11,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`antialiased`}
-      >
-        {children}
-      </body>
+      <SessionProvider>
+        <body
+          className={`antialiased`}
+        >
+          {children}
+        </body>
+      </SessionProvider>
     </html>
   );
 }
